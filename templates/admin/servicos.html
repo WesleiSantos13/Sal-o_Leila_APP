@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>Serviços</title>
+
+    <link rel="stylesheet" href="/static/style.css">
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Serviços</h1>
+
+    <form id="servicoForm">
+
+        <input
+            type="text"
+            id="nome"
+            placeholder="Nome do Serviço"
+            required
+        >
+
+        <input
+            type="number"
+            id="preco"
+            placeholder="Preço"
+            required
+        >
+
+        <input
+            type="number"
+            id="duracao"
+            placeholder="Duração"
+            required
+        >
+        <div class="botoes-form">
+            <button type="submit" id="btnSalvar" class="btn-cadastrar">
+                Cadastrar
+            </button>
+
+            <a href="/admin/dashboard" class="btn-voltar">
+                ⬅ Voltar
+            </a> 
+        </div>
+
+
+    </form>
+
+
+    <ul id="listaServicos"></ul>
+
+</div>
+
+
+<script>
+const form = document.getElementById("servicoForm");
+const lista = document.getElementById("listaServicos");
+let editandoId = null;
+
+// 1. LISTAR SERVIÇOS (Apenas busca e exibe)
+async function carregarServicos() {
+    // Faz a requisição GET para buscar os dados
+    const resposta = await fetch("/servicos"); 
+    const servicos = await resposta.json();
+
+    lista.innerHTML = "";
+
+    for (let servico of servicos) {
+        //Botao Editar e apagar
+        lista.innerHTML += `
+            <li>
+                ${servico.nome} - R$ ${servico.preco} - ${servico.duracao} min
+                                
+                <button class="btn-editar" onclick="editarServico(${servico.id}, '${servico.nome}', ${servico.preco}, ${servico.duracao})">
+                    Editar
+                </button>
+
+                <button class="btn-apagar" onclick="deletarServico(${servico.id})">
+                    Excluir
+                </button>
+            </li>
+        `;
+    }
+}
+
+// 2. SALVAR OU EDITAR SERVIÇO (Lida com o evento do formulário)
+form.addEventListener("submit", async function(evento) {
+    evento.preventDefault();
+
+    // Pegando os VALORES dos inputs 
+    const nome = document.getElementById("nome").value;
+    const preco = document.getElementById("preco").value;
+    const duracao = document.getElementById("duracao").value;
+
+    const dadosDoServico = {
+        nome: nome,
+        preco: preco,
+        duracao: duracao
+    };
+
+    if (editandoId) {
+        // EDITAR (PUT)
+        await fetch(`/servicos/${editandoId}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(dadosDoServico)
+        });
+        
+        editandoId = null; // Reseta a variável após editar
+        
+    } else {
+        // CRIAR (POST)
+        await fetch("/servicos", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(dadosDoServico)
+        });
+    }
+
+    form.reset(); // Limpa os campos
+    carregarServicos(); // Atualiza a lista
+});
+
+// 3. DELETAR SERVIÇO
+async function deletarServico(id) {
+    await fetch(`/servicos/${id}`, {
+        method: "DELETE"
+    });
+
+    carregarServicos(); // Atualiza a lista após deletar
+}
+
+// 4. PREPARAR PARA EDITAR
+function editarServico(id, nome, preco, duracao) {
+    editandoId = id; // Salva o ID que estamos editando
+    
+    // Preenche o formulário com os dados atuais
+    document.getElementById("nome").value = nome;
+    document.getElementById("preco").value = preco;
+    document.getElementById("duracao").value = duracao;
+}
+
+// INICIALIZAÇÃO: Executa ao abrir a página
+carregarServicos();
+</script>
+
+</body>
+</html>

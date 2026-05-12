@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Login Admin - Salão Leila</title>
+    <link rel="stylesheet" href="/static/style.css">
+
+    <style>
+        /* Estilo específico para a mensagem de erro do login */
+        #mensagemErro {
+            color: #d9534f; /* Vermelho padrão de erro */
+            text-align: center;
+            margin-top: 15px;
+            font-weight: bold;
+            display: none; /* Fica escondido até dar erro */
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>Área Administrativa</h1>
+    <p style="text-align: center; margin-bottom: 20px; color: #666;">
+        Acesso restrito. Insira suas credenciais.
+    </p>
+
+    <form id="loginForm">
+
+        <input
+            type="text"
+            id="usuario"
+            placeholder="Usuário"
+            required
+        >
+
+        <input
+            type="password"
+            id="senha"
+            placeholder="Senha"
+            required
+        >
+
+        <!-- Usando a classe btn-cadastrar, mas forçando a cor preta para diferenciar -->
+        <button type="submit" class="btn-cadastrar" style="background-color: #222;">
+            Entrar no Painel
+        </button>
+
+        
+        <div class="botoes-form">
+        <!-- Botão para voltar para a página principal (index) -->
+        <a href="/" class="btn-voltar">⬅ Voltar ao Início</a>
+         </div>
+
+        <!-- Aqui é onde a mensagem de erro vai aparecer -->
+        <p id="mensagemErro">Usuário ou senha inválidos!</p>
+
+    </form>
+
+</div>
+
+<script>
+const form = document.getElementById("loginForm");
+const mensagemErro = document.getElementById("mensagemErro");
+
+form.addEventListener("submit", function(evento) {
+    evento.preventDefault();
+
+    const usuario = document.getElementById("usuario").value;
+    const senha = document.getElementById("senha").value;
+
+    // LÓGICA DE LOGIN
+    if (usuario === "admin" && senha === "123") {
+        // Deu certo! Vai para o painel.
+        window.location.href = "/admin/dashboard";
+    } else {
+        // Deu errado! Mostra a mensagem na tela.
+        mensagemErro.style.display = "block";
+        
+        // Esconde a mensagem automaticamente após 3 segundos
+        setTimeout(() => {
+            mensagemErro.style.display = "none";
+        }, 3000);
+    }
+});
+</script>
+
+</body>
+</html>

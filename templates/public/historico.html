@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Meu Histórico - Salão Leila</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .caixa-busca {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .caixa-busca input {
+            flex: 1;
+            margin-bottom: 0; /* Alinha com o botão */
+        }
+        
+        .aviso-telefone {
+            color: #d9534f;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        /* Esconde o formulário de edição de data até o cliente clicar em alterar */
+        #formEdicaoData {
+            display: none;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <div class="botoes-form">
+        <a href="/" class="btn-voltar">⬅ Voltar ao Início</a>
+    </div>
+
+    <h1>Meus Agendamentos</h1>
+    <p style="text-align: center; margin-bottom: 20px;">Digite seu e-mail para ver seu histórico ou alterar uma data.</p>
+
+    <!-- Formulário de Busca -->
+    <form id="buscaForm" class="caixa-busca">
+        <input type="email" id="emailBusca" placeholder="exemplo@email.com" required>
+        <button type="submit" class="btn-cadastrar" style="width: auto;">Buscar</button>
+    </form>
+
+    <hr>
+
+    <ul id="listaHistorico"></ul>
+
+    <!-- Formulário escondido para escolher a nova data -->
+    <div id="formEdicaoData">
+        <h3>Alterar Data</h3>
+        <input type="datetime-local" id="novaData" class="select-padrao" required>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-cadastrar" onclick="salvarNovaData()">Confirmar Nova Data</button>
+            <button class="btn-voltar" onclick="fecharEdicao()">Cancelar</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+const buscaForm = document.getElementById("buscaForm");
+const lista = document.getElementById("listaHistorico");
+const formEdicaoData = document.getElementById("formEdicaoData");
+
+let agendamentoEditandoId = null;
+let mapaServicos = {};
+
+// 1. CARREGAR MAPA DE SERVIÇOS (Para mostrar os nomes)
+async function carregarServicos() {
+    const resposta = await fetch("/servicos");
+    const servicos = await resposta.json();
+    for (let s of servicos) mapaServicos[s.id] = s.nome;
+}
+
+// 2. BUSCAR HISTÓRICO DO CLIENTE
+buscaForm.addEventListener("submit", async function(evento) {
+    evento.preventDefault();
+    const email = document.getElementById("emailBusca").value;
+    
+    lista.innerHTML = "<p>Buscando...</p>";
+
+    try {
+        const resposta = await fetch(`/api/historico?email=${email}`);
+        
+        if (!resposta.ok) {
+            lista.innerHTML = "<p style='color: red;'>Cliente não encontrado ou sem agendamentos.</p>";
+            return;
+        }
+
+        const agendamentos = await resposta.json();
+        lista.innerHTML = "";
+
+        // Pegar a data e hora de HOJE para comparar
+        const dataAtual = new Date();
+
+        for (let agendamento of agendamentos) {
+            let nomeServico = mapaServicos[agendamento.servico_id] || "Serviço";
+            let dataAgendamento = new Date(agendamento.data_hora);
+            
+            // Calcula a diferença em horas entre o agendamento e o momento atual
+            let diferencaHoras = (dataAgendamento - dataAtual) / (1000 * 60 * 60);
+
+            let botoesHTML = "";
+
+            // REGRA: Se faltar MAIS de 48h, pode alterar pelo sistema
+            if (diferencaHoras > 48 && agendamento.status !== "Serviço Realizado") {
+                botoesHTML = `
+                    <button class="btn-editar" onclick="abrirEdicao(${agendamento.id})">
+                        📅 Alterar Data
+                    </button>
+                `;
+            } 
+            // REGRA: Se for no futuro, mas faltar MENOS de 48h, só por telefone
+            else if (diferencaHoras > 0 && diferencaHoras <= 48 && agendamento.status !== "Serviço Realizado") {
+                botoesHTML = `<p class="aviso-telefone">Falta menos de 2 dias. Para alterar, ligue para nós!</p>`;
+            }
+
+            lista.innerHTML += `
+                <li>
+                    <strong>Data/Hora:</strong> ${agendamento.data_hora.replace("T", " ")} <br>
+                    <strong>Serviço:</strong> ${nomeServico} <br>
+                    <strong>Status:</strong> ${agendamento.status}
+                    <br><br>
+                    ${botoesHTML}
+                </li>
+            `;
+        }
+    } catch (erro) {
+        lista.innerHTML = "<p>Erro ao buscar histórico.</p>";
+    }
+});
+
+// 3. FUNÇÕES PARA ALTERAR A DATA
+function abrirEdicao(id) {
+    agendamentoEditandoId = id;
+    formEdicaoData.style.display = "block";
+}
+
+function fecharEdicao() {
+    agendamentoEditandoId = null;
+    formEdicaoData.style.display = "none";
+}
+
+async function salvarNovaData() {
+    const novaData = document.getElementById("novaData").value;
+    
+    if(!novaData) {
+        alert("Escolha uma data válida!");
+        return;
+    }
+
+    try {
+        await fetch(`/agendamentos/${agendamentoEditandoId}/data`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ data_hora: novaData })
+        });
+
+        alert("Data atualizada com sucesso!");
+        fecharEdicao();
+        
+        // Simula um clique no botão buscar para atualizar a lista automaticamente
+        document.querySelector("#buscaForm button").click(); 
+    } catch (erro) {
+        alert("Erro ao alterar a data.");
+    }
+}
+
+// Inicializa carregando os serviços
+carregarServicos();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Gerenciar Clientes - Salão Leila</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+    <div class="container">
+
+
+        <h1>Gerenciar Clientes</h1>
+
+        <form id="clienteForm">
+            <input
+                type="text"
+                id="nome"
+                placeholder="Nome"
+                required
+            >
+
+            <input
+                type="text"
+                id="telefone"
+                placeholder="Telefone"
+                required
+            >
+
+            <input
+                type="email"
+                id="email"
+                placeholder="Email"
+                required
+            >
+
+        <div class="botoes-form">
+            <button type="submit" id="btnSalvar" class="btn-cadastrar">
+                Cadastrar
+            </button>
+
+            <a href="/admin/dashboard" class="btn-voltar">
+                ⬅ Voltar
+            </a> 
+        </div>
+        </form>
+
+        <hr>
+
+        <h2>Lista de Clientes</h2>
+
+        <ul id="listaClientes"></ul>
+
+    </div>
+
+   
+    <script>
+        const form = document.getElementById("clienteForm");
+        const lista = document.getElementById("listaClientes");
+
+        // 1. LISTAR CLIENTES
+        async function carregarClientes() {
+            const resposta = await fetch("/clientes");
+            const clientes = await resposta.json();
+
+            lista.innerHTML = "";
+
+            for (let cliente of clientes) {
+                lista.innerHTML += `
+                    <li>
+                        <strong>${cliente.nome}</strong> <br>
+                        📞 ${cliente.telefone} | ✉️ ${cliente.email}
+                        <br><br>
+                        
+                        <!-- Botão de Apagar usando a classe btn-apagar -->
+                        <button class="btn-apagar" onclick="deletarCliente(${cliente.id})">
+                            🗑 Apagar
+                        </button>
+                    </li>
+                `;
+            }
+        }
+
+        // 2. APAGAR CLIENTE PELA ADMIN
+        async function deletarCliente(id) {
+            if (confirm("Tem certeza que deseja apagar este cliente?")) {
+                const resposta = await fetch(`/clientes/${id}`, {
+                    method: "DELETE"
+                });
+
+                // Se a resposta NÃO for ok (Ex: deu erro 400 porque tem agendamento)
+                if (!resposta.ok) {
+                    const dadosErro = await resposta.json();
+                    alert("⚠️ " + dadosErro.erro); // Mostra o erro do Python na tela
+                } else {
+                    // Se deu tudo certo, atualiza a lista
+                    carregarClientes(); 
+                }
+            }
+        }
+
+        // 3. CADASTRAR CLIENTE PELA ADMIN
+        form.addEventListener("submit", async function(evento) {
+            evento.preventDefault();
+
+            const nome = document.getElementById("nome").value;
+            const telefone = document.getElementById("telefone").value;
+            const email = document.getElementById("email").value;
+
+            await fetch("/clientes", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    nome: nome,
+                    telefone: telefone,
+                    email: email
+                })
+            });
+
+            form.reset(); // Limpa os campos do formulário
+            carregarClientes(); // Atualiza a lista
+        });
+
+        // INICIALIZAÇÃO: Executa ao abrir a página
+        carregarClientes();
+    </script>
+
+</body>
+</html>

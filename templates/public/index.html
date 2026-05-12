@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salão Leila - Bem-vindo</title>
+    
+    <!-- Puxando o seu arquivo de estilo padrão -->
+    <link rel="stylesheet" href="/static/style.css">
+    
+    <!-- Estilos específicos apenas para deixar esta página inicial mais bonita -->
+    <style>
+        .container-inicio {
+            max-width: 700px; /* Um pouco mais largo para caber os dois blocos lado a lado */
+            margin: 50px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+
+        .cabecalho-boas-vindas {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .cabecalho-boas-vindas h1 {
+            font-size: 2.8em;
+            color: #222;
+            margin-bottom: 10px;
+        }
+
+        .cabecalho-boas-vindas p {
+            color: #666;
+            font-size: 1.2em;
+        }
+
+        .opcoes-acesso {
+            display: flex;
+            gap: 20px;
+        }
+
+        /* Transformando os links em blocos grandes (Cards) */
+        .opcao-card {
+            flex: 1;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            padding: 30px 20px;
+            border-radius: 10px;
+            text-align: center;
+            text-decoration: none; /* Tira o sublinhado do link */
+            color: #333;
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* Efeito de passar o mouse */
+        .opcao-card:hover {
+            transform: translateY(-5px); /* Faz o card pular para cima */
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .card-cliente:hover {
+            border-color: #28a745; /* Fica verde para o cliente */
+        }
+
+        .card-admin:hover {
+            border-color: #333; /* Fica escuro para o admin */
+        }
+
+        .opcao-icone {
+            font-size: 3.5em;
+            margin-bottom: 15px;
+        }
+
+        .opcao-card h2 {
+            margin: 0 0 10px 0;
+            font-size: 1.5em;
+        }
+
+        .opcao-card p {
+            font-size: 0.95em;
+            color: #555;
+            margin: 0;
+        }
+
+        .rodape {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #999;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Usando uma nova classe para não bagunçar o .container do style.css -->
+    <div class="container-inicio">
+        
+        <div class="cabecalho-boas-vindas">
+            <h1>✨ Salão Leila ✨</h1>
+            <p>Realçando a sua beleza com os melhores profissionais da região.</p>
+        </div>
+
+        <div class="opcoes-acesso">
+            <!-- OPÇÃO 1: CLIENTE -->
+            <a href="/agendar" class="opcao-card card-agendar">
+                <div class="opcao-icone">💇‍♀️</div>
+                <h2>Sou Cliente</h2>
+                <p>Ver serviços disponíveis, preços e agendar meu horário.</p>
+            </a>
+
+            <!-- OPÇÃO 2: ADMINISTRAÇÃO -->
+            <a href="/admin" class="opcao-card card-admin">
+                <div class="opcao-icone">⚙️</div>
+                <h2>Administração</h2>
+                <p>Acesso restrito para gerenciamento do salão e clientes.</p>
+            </a>
+        </div>
+
+        <div class="rodape">
+            <p>📍 Rua das Flores, 123 - Centro | 📞 (11) 99999-9999</p>
+            <p>&copy; 2026 Salão Leila. Todos os direitos reservados.</p>
+        </div>
+
+    </div>
+
+</body>
+</html>

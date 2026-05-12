@@ -1,0 +1,30 @@
+# Ambiente Virtual (NUNCA enviar para o GitHub)
+venv/
+env/
+ENV/
+dist/
+build/
+
+# Cache do Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Banco de Dados SQLite (Pasta de instância do Flask)
+instance/
+*.db
+*.sqlite
+
+# Variáveis de Ambiente (Segurança)
+.env
+.flaskenv
+
+# Pastas de Editores (Opcional, mas recomendado)
+.vscode/
+.idea/
+*.swp
+
+# Ficheiros do Sistema Operativo
+.DS_Store
+Thumbs.db

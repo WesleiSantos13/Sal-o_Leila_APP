@@ -1,0 +1,171 @@
+body {
+    font-family: Arial;
+    background: #f4f4f4;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    width: 500px;
+    margin: 40px auto;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+h1,
+h2 {
+    text-align: center;
+}
+
+.menu {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.menu a {
+    flex: 1;
+    text-align: center;
+    text-decoration: none;
+    background: black;
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.menu a:hover {
+    background: #333;
+}
+
+.cards {
+    display: flex;
+    gap: 10px;
+}
+
+.card {
+    flex: 1;
+    background: #f1f1f1;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.card p {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+form {
+    margin-bottom: 20px;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    background: black;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button:hover {
+    background: #333;
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+}
+
+li {
+    background: #f1f1f1;
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+/* Classes para os botões da lista */
+.btn-editar, 
+.btn-apagar {
+    width: auto;          
+    padding: 5px 10px;    
+    font-size: 13px;       
+    margin-left: 8px;     
+}
+
+/* Estilo específico para o botão de Editar */
+.btn-editar {
+    background: #5a5a5a;   
+}
+
+.btn-editar:hover {
+    background: #444;
+}
+
+/* Estilo específico para o botão de Apagar */
+.btn-apagar {
+    background: #d9534f;  
+}
+
+.btn-apagar:hover {
+    background: #c9302c;
+}
+
+
+/* --- Classe para o Botão Cadastrar --- */
+.btn-cadastrar {
+    width: 100%;
+    padding: 12px;
+    background: #28a745; /* Verde - indica sucesso/adição */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background 0.3s; /* Deixa o hover mais suave */
+}
+
+.btn-cadastrar:hover {
+    background: #218838;
+}
+
+/* --- Classe para o Botão Voltar --- */
+.btn-voltar {
+    display: inline-block;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+    text-decoration: none;
+    padding: 10px;
+    background: #6c757d; /* Cinza - indica ação secundária */
+    color: white;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: background 0.3s;
+}
+
+.btn-voltar:hover {
+    background: #5a6268;
+}
+
+.botoes-form {
+    display: flex;       /* Coloca os elementos lado a lado */
+    gap: 10px;           /* Cria um espaço de 10px entre os botões */
+    margin-top: 10px;    /* Dá um pequeno espaço acima dos botões */
+}
+
+

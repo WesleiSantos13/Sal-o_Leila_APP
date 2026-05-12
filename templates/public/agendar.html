@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Agendar Horário - Salão Leila</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .caixa-servicos {
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+            text-align: left;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .caixa-servicos label {
+            display: block;
+            margin-bottom: 10px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+        
+        .caixa-servicos input[type="checkbox"] {
+            width: auto;
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+
+        .botoes-topo {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .botoes-topo a {
+            flex: 1;
+            text-align: center;
+            text-decoration: none;
+            padding: 12px;
+            box-sizing: border-box;
+            border-radius: 5px;
+            font-weight: bold;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="botoes-topo">
+        <a href="/" class="btn-voltar" style="background-color: #6c757d;">⬅ Voltar</a>
+        <a href="/meu-historico" class="btn-cadastrar" style="background-color: #007bff;">📅 Meu Histórico</a>
+    </div>
+
+    <h1>Agendar Horário</h1>
+    <p style="text-align: center; margin-bottom: 20px; color: #666;">
+        Escolha um ou mais serviços para o seu atendimento.
+    </p>
+
+    <form id="agendamentoForm">
+
+        <input type="text" id="nome" placeholder="Seu nome completo" required>
+        <input type="tel" id="telefone" placeholder="Seu telefone (WhatsApp)" required>
+        <input type="email" id="email" placeholder="Seu melhor e-mail" required>
+
+        <div id="lista_servicos" class="caixa-servicos">
+            <p>Carregando serviços disponíveis...</p>
+        </div>
+
+        <input type="datetime-local" id="data_hora" required>
+
+        <button type="submit" id="btnAgendar" class="btn-cadastrar" style="background-color: #28a745; border: none; padding: 12px; width: 100%; color: white; font-weight: bold; border-radius: 5px; cursor: pointer;">
+            Confirmar Agendamento
+        </button>
+
+    </form>
+
+</div>
+
+<script>
+const form = document.getElementById("agendamentoForm");
+const containerServicos = document.getElementById("lista_servicos");
+const btnAgendar = document.getElementById("btnAgendar");
+
+// 1. CARREGAR SERVIÇOS
+async function carregarServicos() {
+    try {
+        const resposta = await fetch("/servicos");
+        const servicos = await resposta.json();
+        containerServicos.innerHTML = ""; 
+
+        for (let servico of servicos) {
+            containerServicos.innerHTML += `
+                <label>
+                    <input type="checkbox" name="servicos_selecionados" value="${servico.id}">
+                    ${servico.nome} - R$ ${servico.preco.toFixed(2)}
+                </label>
+            `;
+        }
+    } catch (erro) {
+        containerServicos.innerHTML = '<p style="color: red;">Erro ao carregar serviços.</p>';
+    }
+}
+
+// 2. FUNÇÃO PARA VERIFICAR SE JÁ TEM AGENDAMENTO NA SEMANA
+async function sugerirAgrupamento(email, dataEscolhida) {
+    try {
+        const resposta = await fetch(`/api/historico?email=${email}`);
+        if (!resposta.ok) return dataEscolhida; // Se não tem histórico, devolve a data normal
+        
+        const agendamentos = await resposta.json();
+        const dEscolhida = new Date(dataEscolhida);
+        const hoje = new Date();
+
+        for (let ag of agendamentos) {
+            const dAgendamento = new Date(ag.data_hora);
+            
+            // Só olha para agendamentos no futuro que não foram concluídos
+            if (dAgendamento > hoje && ag.status !== "Serviço Realizado") {
+                
+                // Calcula a diferença de dias entre a data que ela escolheu agora e a que ela já tinha marcado
+                const diffTempo = Math.abs(dEscolhida - dAgendamento);
+                const diffDias = diffTempo / (1000 * 60 * 60 * 24);
+                
+                // Se for na mesma semana (diferença menor que 6 dias) mas em um horário/dia diferente
+                if (diffDias <= 6 && dEscolhida.getTime() !== dAgendamento.getTime()) {
+                    
+                    const dataFormatada = ag.data_hora.replace("T", " às ");
+                    
+                    // Faz a pergunta para a cliente
+                    const querAgrupar = confirm(`✨ Dica da Leila:\n\nIdentificamos que você já tem um horário conosco para o dia ${dataFormatada}.\n\nGostaria de agendar este novo serviço para a mesma data e horário para aproveitar a viagem?`);
+                    
+                    if (querAgrupar) {
+                        return ag.data_hora; // Se ela disser SIM, trocamos a data
+                    }
+                    break; // Se ela disser NÃO, paramos de perguntar
+                }
+            }
+        }
+        return dataEscolhida;
+    } catch (erro) {
+        return dataEscolhida; // Em caso de erro na rede, segue o fluxo normal
+    }
+}
+
+// 3. ENVIAR FORMULÁRIO
+form.addEventListener("submit", async function(evento) {
+    evento.preventDefault();
+
+    const checkboxesMarcadas = document.querySelectorAll('input[name="servicos_selecionados"]:checked');
+    const servicosIds = Array.from(checkboxesMarcadas).map(cb => cb.value);
+
+    if (servicosIds.length === 0) {
+        alert("Por favor, selecione pelo menos um serviço!");
+        return;
+    }
+
+    const textoOriginalBotao = btnAgendar.innerText;
+    btnAgendar.innerText = "Aguarde, agendando...";
+    btnAgendar.disabled = true;
+
+    try {
+        const email = document.getElementById("email").value;
+        const dataHoraOriginal = document.getElementById("data_hora").value;
+
+        // CHAMA A FUNCAO DE AGRUPAMENTO ANTES DE SALVAR!
+        const dataFinal = await sugerirAgrupamento(email, dataHoraOriginal);
+
+        // Cria/Busca Cliente
+        const respostaCliente = await fetch("/clientes", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                nome: document.getElementById("nome").value,
+                telefone: document.getElementById("telefone").value,
+                email: email
+            })
+        });
+        const cliente = await respostaCliente.json();
+
+        // Cria os Agendamentos enviando a dataFinal (que pode ter sido alterada pela sugestão)
+        await fetch("/agendamentos", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                data_hora: dataFinal,
+                cliente_id: cliente.id,
+                servicos_ids: servicosIds, 
+                status: "Agendado"
+            })
+        });
+
+        alert("🎉 Agendamento realizado com sucesso! Te esperamos no salão.");
+        form.reset();
+
+    } catch (erro) {
+        alert("Erro ao agendar. Tente novamente.");
+    } finally {
+        btnAgendar.innerText = textoOriginalBotao;
+        btnAgendar.disabled = false;
+    }
+});
+
+carregarServicos();
+</script>
+
+</body>
+</html>

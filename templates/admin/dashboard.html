@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Painel - Salão Leila</title>
+    <link rel="stylesheet" href="/static/style.css">
+    
+    <style>
+        .cabecalho-dashboard {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .cabecalho-dashboard h1 {
+            margin: 0;
+            font-size: 2em;
+        }
+
+        .cabecalho-dashboard p {
+            margin: 5px 0 0 0;
+            color: #666;
+            font-weight: bold;
+        }
+
+        .cabecalho-dashboard .btn-voltar {
+            width: auto;
+            padding: 10px 20px;
+            margin: 0;
+        }
+
+        /* Distribuindo os 4 cards em Grid */
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: default;
+            background: #f8f9fa;
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            border-radius: 8px;
+            border-bottom: 4px solid transparent; /* Para colocar uma cor embaixo */
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 1.1em;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .card p {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 10px 0 0 0;
+        }
+        
+        /* Cores específicas para cada Card */
+        #cardClientes { border-color: #6c757d; }
+        #totalClientes { color: #6c757d; }
+
+        #cardAgendamentos { border-color: #ffc107; }
+        #totalAgendamentos { color: #ffc107; }
+
+        #cardConcluidos { border-color: #17a2b8; }
+        #totalConcluidos { color: #17a2b8; }
+
+        #cardFaturamento { border-color: #28a745; }
+        #faturamentoSemana { color: #28a745; font-size: 2em; }
+    </style>
+</head>
+<body>
+
+    <div class="container" style="max-width: 1000px;"> 
+
+        <div class="cabecalho-dashboard">
+            <div>
+                <h1>✨ Desempenho do Negócio</h1>
+                <p id="textoSemana">Carregando dados da semana...</p>
+            </div>
+            <a href="/admin" class="btn-voltar">⬅ Sair</a>
+        </div>
+
+        <div class="menu">
+            <a href="/admin/clientes">👥 Clientes</a>
+            <a href="/admin/servicos">💇‍♀️ Serviços</a>
+            <a href="/admin/agendamentos">📅 Agendamentos</a>
+        </div>
+
+        <div class="cards">
+            <div class="card" id="cardClientes">
+                <h2>Total de Clientes</h2>
+                <p id="totalClientes">...</p> 
+            </div>
+
+            <div class="card" id="cardAgendamentos">
+                <h2>Agendados na Semana</h2>
+                <p id="totalAgendamentos">...</p>
+            </div>
+
+            <div class="card" id="cardConcluidos">
+                <h2>Concluídos na Semana</h2>
+                <p id="totalConcluidos">...</p>
+            </div>
+
+            <div class="card" id="cardFaturamento">
+                <h2>Faturamento Semanal</h2>
+                <p id="faturamentoSemana">...</p>
+            </div>
+        </div>
+
+    </div>
+
+<script>
+// Função auxiliar para verificar se uma data está na mesma semana de hoje
+function ehDaMesmaSemana(dataDesejada) {
+    const hoje = new Date();
+    // Ajusta para o domingo da semana atual (início da semana)
+    const primeiroDia = new Date(hoje.setDate(hoje.getDate() - hoje.getDay()));
+    primeiroDia.setHours(0, 0, 0, 0);
+    
+    // Ajusta para o sábado da semana atual (fim da semana)
+    const ultimoDia = new Date(primeiroDia);
+    ultimoDia.setDate(primeiroDia.getDate() + 6);
+    ultimoDia.setHours(23, 59, 59, 999);
+
+    const dataTestada = new Date(dataDesejada);
+    return dataTestada >= primeiroDia && dataTestada <= ultimoDia;
+}
+
+// Mostra a qual semana estamos nos referindo no topo da tela
+function atualizarTextoSemana() {
+    const hoje = new Date();
+    const primeiroDia = new Date(hoje.setDate(hoje.getDate() - hoje.getDay()));
+    const ultimoDia = new Date(primeiroDia);
+    ultimoDia.setDate(primeiroDia.getDate() + 6);
+
+    const formatar = (data) => data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    document.getElementById('textoSemana').innerText = `Semana atual: ${formatar(primeiroDia)} a ${formatar(ultimoDia)}`;
+}
+
+async function carregarDashboard() {
+    atualizarTextoSemana();
+
+    try {
+        const [respostaClientes, respostaServicos, respostaAgendamentos] = await Promise.all([
+            fetch('/clientes'),
+            fetch('/servicos'),
+            fetch('/agendamentos')
+        ]);
+
+        if (!respostaClientes.ok || !respostaServicos.ok || !respostaAgendamentos.ok) {
+            throw new Error("Falha na API");
+        }
+
+        const clientesJson = await respostaClientes.json();
+        const servicosJson = await respostaServicos.json();
+        const agendamentosJson = await respostaAgendamentos.json();
+
+        // Cria um "dicionário" de preços de serviços para calcular o faturamento depois
+        let precosServicos = {};
+        for (let servico of servicosJson) {
+            precosServicos[servico.id] = servico.preco;
+        }
+
+        // Variáveis para contar o desempenho da semana
+        let agendamentosDaSemana = 0;
+        let concluidosDaSemana = 0;
+        let dinheiroDaSemana = 0;
+
+        // Analisa cada agendamento
+        for (let agendamento of agendamentosJson) {
+            // Se for dessa semana, conta!
+            if (ehDaMesmaSemana(agendamento.data_hora)) {
+                agendamentosDaSemana++;
+
+                // Se além de ser dessa semana, ele já estiver pago/concluído...
+                if (agendamento.status === 'Serviço Realizado') {
+                    concluidosDaSemana++;
+                    dinheiroDaSemana += precosServicos[agendamento.servico_id] || 0; // Soma o preço do serviço
+                }
+            }
+        }
+
+        // Atualiza a tela
+        document.getElementById('totalClientes').innerText = clientesJson.length; // O total de clientes a Leila gosta de ver o número cheio
+        document.getElementById('totalAgendamentos').innerText = agendamentosDaSemana;
+        document.getElementById('totalConcluidos').innerText = concluidosDaSemana;
+        
+        // Formata o dinheiro para R$
+        document.getElementById('faturamentoSemana').innerText = `R$ ${dinheiroDaSemana.toFixed(2).replace('.', ',')}`;
+
+    } catch (erro) {
+        console.error("Erro:", erro);
+        document.getElementById('totalClientes').innerText = "Erro";
+        document.getElementById('totalAgendamentos').innerText = "Erro";
+        document.getElementById('totalConcluidos').innerText = "Erro";
+        document.getElementById('faturamentoSemana').innerText = "Erro";
+    }
+}
+
+carregarDashboard();
+</script>
+
+</body>
+</html>

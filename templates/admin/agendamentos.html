@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Agendamentos Admin - Salão Leila</title>
+    <link rel="stylesheet" href="/static/style.css">
+    
+    <style>
+        /* Estilos para os novos botões do painel Admin */
+        .btn-confirmar {
+            background-color: #17a2b8; /* Azul claro */
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+        
+        .btn-editar-data {
+            background-color: #ffc107; /* Amarelo */
+            color: black;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+
+        #formEdicaoData {
+            display: none;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    
+    <h1>Gerenciar Agendamentos</h1>
+
+    <form id="agendamentoForm">
+        <input
+            type="datetime-local"
+            id="data_hora"
+            required
+        >
+
+        <select id="cliente_id" class="select-padrao" required>
+            <option value="">Carregando clientes...</option>
+        </select>
+
+        <select id="servico_id" class="select-padrao" required>
+            <option value="">Carregando serviços...</option>
+        </select>
+
+        <div class="botoes-form">
+            <button type="submit" id="btnSalvar" class="btn-cadastrar">
+                Agendar Novo
+            </button>
+
+            <a href="/admin/dashboard" class="btn-voltar">
+                ⬅ Voltar ao Painel
+            </a> 
+        </div>
+    </form>
+
+    <div id="formEdicaoData">
+        <h3>Alterar Data do Agendamento</h3>
+        <input type="datetime-local" id="novaData" class="select-padrao" required>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-cadastrar" onclick="salvarNovaData()">Salvar Nova Data</button>
+            <button class="btn-voltar" onclick="fecharEdicao()">Cancelar</button>
+        </div>
+    </div>
+
+    <hr>
+    
+    <h2>Lista de Agendamentos</h2>
+    <ul id="listaAgendamentos"></ul>
+
+</div>
+
+<script>
+const form = document.getElementById("agendamentoForm");
+const lista = document.getElementById("listaAgendamentos");
+const selectCliente = document.getElementById("cliente_id");
+const selectServico = document.getElementById("servico_id");
+const formEdicaoData = document.getElementById("formEdicaoData");
+
+let mapaClientes = {};
+let mapaServicos = {};
+let agendamentoEditandoId = null;
+
+// 1. CARREGAR DADOS BASE (Clientes e Serviços)
+async function carregarDadosBase() {
+    try {
+        const [respClientes, respServicos] = await Promise.all([
+            fetch("/clientes"),
+            fetch("/servicos")
+        ]);
+
+        const clientes = await respClientes.json();
+        const servicos = await respServicos.json();
+
+        selectCliente.innerHTML = '<option value="">Selecione o Cliente</option>';
+        for (let cliente of clientes) {
+            mapaClientes[cliente.id] = cliente.nome;
+            selectCliente.innerHTML += `<option value="${cliente.id}">${cliente.nome}</option>`;
+        }
+
+        selectServico.innerHTML = '<option value="">Selecione o Serviço</option>';
+        for (let servico of servicos) {
+            mapaServicos[servico.id] = servico.nome;
+            selectServico.innerHTML += `<option value="${servico.id}">${servico.nome}</option>`;
+        }
+
+        carregarAgendamentos();
+    } catch (erro) {
+        console.error("Erro:", erro);
+    }
+}
+
+// 2. LISTAR AGENDAMENTOS
+async function carregarAgendamentos() {
+    const resposta = await fetch("/agendamentos");
+    const agendamentos = await resposta.json();
+
+    lista.innerHTML = "";
+
+    for (let agendamento of agendamentos) {
+        let statusAtual = agendamento.status ? agendamento.status : "Agendado";
+        let nomeCliente = mapaClientes[agendamento.cliente_id] || "Cliente Excluído";
+        let nomeServico = mapaServicos[agendamento.servico_id] || "Serviço Excluído";
+
+        let botoesAcao = "";
+
+        // Se o serviço não estiver concluído, mostra as opções de Confirmar, Editar e Concluir
+        if (statusAtual !== 'Serviço Realizado') {
+            
+            // Só mostra o botão Confirmar se ainda estiver apenas "Agendado"
+            if (statusAtual === 'Agendado') {
+                botoesAcao += `
+                    <button class="btn-confirmar" onclick="atualizarStatus(${agendamento.id}, 'Confirmado')">
+                        👍 Confirmar
+                    </button>
+                `;
+            }
+            
+            botoesAcao += `
+                <button class="btn-editar-data" onclick="abrirEdicao(${agendamento.id})">
+                    📅 Editar Data
+                </button>
+                
+                <button class="btn-editar" onclick="atualizarStatus(${agendamento.id}, 'Serviço Realizado')">
+                    ✔ Concluir
+                </button>
+            `;
+        }
+
+        // Botão de apagar sempre aparece
+        botoesAcao += `
+            <button class="btn-apagar" onclick="deletarAgendamento(${agendamento.id})">
+                🗑 Apagar
+            </button>
+        `;
+
+        lista.innerHTML += `
+            <li>
+                <strong>Data/Hora:</strong> ${agendamento.data_hora.replace("T", " às ")} <br>
+                <strong>Cliente:</strong> ${nomeCliente} <br> 
+                <strong>Serviço:</strong> ${nomeServico} <br>
+                <strong>Status:</strong> <span style="font-weight: bold; color: ${statusAtual === 'Confirmado' ? '#17a2b8' : (statusAtual === 'Serviço Realizado' ? '#28a745' : '#666')}">${statusAtual}</span> 
+                <br><br>
+                <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                    ${botoesAcao}
+                </div>
+            </li>
+        `;
+    }
+}
+
+// 3. ATUALIZAR STATUS (Serve para Confirmar agendamento e Concluir)
+async function atualizarStatus(id, novoStatus) {
+    if (confirm(`Deseja mudar o status para "${novoStatus}"?`)) {
+        await fetch(`/agendamentos/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: novoStatus })
+        });
+        carregarAgendamentos();
+    }
+}
+
+// 4. FUNÇÕES DE EDITAR DATA DO AGENDAMENTO VIA ADMIN
+function abrirEdicao(id) {
+    agendamentoEditandoId = id;
+    formEdicaoData.style.display = "block";
+    // Rola a página para baixo para ver o formulário de edição
+    formEdicaoData.scrollIntoView({ behavior: "smooth" }); 
+}
+
+function fecharEdicao() {
+    agendamentoEditandoId = null;
+    formEdicaoData.style.display = "none";
+}
+
+async function salvarNovaData() {
+    const novaData = document.getElementById("novaData").value;
+    if(!novaData) {
+        alert("Por favor, selecione uma data.");
+        return;
+    }
+
+    try {
+        // Usa a mesma rota para o cliente alterar a data
+        await fetch(`/agendamentos/${agendamentoEditandoId}/data`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ data_hora: novaData })
+        });
+        alert("Data alterada com sucesso!");
+        fecharEdicao();
+        carregarAgendamentos();
+    } catch (erro) {
+        alert("Erro ao alterar data.");
+    }
+}
+
+// 5. APAGAR AGENDAMENTO PELA ADMIN
+async function deletarAgendamento(id) {
+    if (confirm("Tem certeza que deseja apagar este agendamento?")) {
+        await fetch(`/agendamentos/${id}`, { method: "DELETE" });
+        carregarAgendamentos();
+    }
+}
+
+// 6. CADASTRAR AGENDAMENTO PELA ADMIN
+form.addEventListener("submit", async function(evento) {
+    evento.preventDefault();
+
+    const data_hora = document.getElementById("data_hora").value;
+    const cliente_id = document.getElementById("cliente_id").value;
+    const servico_id = document.getElementById("servico_id").value;
+
+    await fetch("/agendamentos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            data_hora: data_hora,
+            cliente_id: cliente_id,
+            servicos_ids: [servico_id], // Formato de lista (Array) para o backend não quebrar
+            status: "Agendado"
+        })
+    });
+
+    form.reset();
+    carregarAgendamentos();
+});
+
+carregarDadosBase();
+</script>
+
+</body>
+</html>
