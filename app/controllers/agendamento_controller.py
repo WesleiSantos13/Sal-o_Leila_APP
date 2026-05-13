@@ -16,7 +16,7 @@ def criar_agendamento():
 
     cliente_id = dados.get("cliente_id")
     
-    # Agora pegamos a lista de serviços (array) enviada pelo novo frontend
+    # Agora pegamos a lista de serviços (array) enviada
     servicos_ids = dados.get("servicos_ids", [])
 
     # Validação: Se a lista estiver vazia, retorna um erro
