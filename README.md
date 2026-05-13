@@ -47,6 +47,7 @@ Este projeto foi desenvolvido como uma solução personalizada para o gerenciame
 ```bash
 Sal-o_Leila_APP/
 │
+├── Prints_tela_video/
 ├── app/
 │   ├── controllers/
 │   ├── models/
