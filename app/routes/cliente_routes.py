@@ -19,5 +19,5 @@ def rota_listar_clientes():
 
 @cliente_bp.route("/clientes/<int:id>", methods=["DELETE"])
 def deletar_cliente_route(id):
-    """Chama o controlador para realizar a exclusão segura de um cliente pelo ID."""
+    """Chama o controlador para realizar a exclusão de um cliente pelo ID."""
     return deletar_cliente(id)
