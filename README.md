@@ -13,7 +13,7 @@ Este projeto foi desenvolvido como uma solução personalizada para o gerenciame
 - Controle operacional dos atendimentos;
 - Dashboard gerencial com métricas do salão;
 - Organização dos serviços realizados;
-- Melhor experiência para clientes e administradores.
+
 
 ---
 
@@ -24,6 +24,7 @@ Este projeto foi desenvolvido como uma solução personalizada para o gerenciame
 - Flask
 - Flask-SQLAlchemy
 - SQLAlchemy
+
 
 ## Banco de Dados
 - SQLite (desenvolvimento)
