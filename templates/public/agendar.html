@@ -2,64 +2,30 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Agendar Horário - Salão Leila</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendar Horário — Salão Santana</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Puxando os estilos centralizados -->
     <link rel="stylesheet" href="/static/style.css">
-    <style>
-        .caixa-servicos {
-            background: white;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            padding: 15px;
-            margin-bottom: 15px;
-            text-align: left;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        
-        .caixa-servicos label {
-            display: block;
-            margin-bottom: 10px;
-            cursor: pointer;
-            font-size: 15px;
-        }
-        
-        .caixa-servicos input[type="checkbox"] {
-            width: auto;
-            margin-right: 10px;
-            transform: scale(1.2);
-        }
-
-        .botoes-topo {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .botoes-topo a {
-            flex: 1;
-            text-align: center;
-            text-decoration: none;
-            padding: 12px;
-            box-sizing: border-box;
-            border-radius: 5px;
-            font-weight: bold;
-            color: white;
-        }
-    </style>
 </head>
 <body>
 
 <div class="container">
 
     <div class="botoes-topo">
-        <a href="/" class="btn-voltar" style="background-color: #6c757d;">⬅ Voltar</a>
-        <a href="/meu-historico" class="btn-cadastrar" style="background-color: #007bff;">📅 Meu Histórico</a>
+        <a href="/" class="btn-nav btn-nav-voltar">⬅ Voltar</a>
+        <a href="/meu-historico" class="btn-nav btn-nav-historico">📅 Meu Histórico</a>
     </div>
 
-    <h1>Agendar Horário</h1>
-    <p style="text-align: center; margin-bottom: 20px; color: #666;">
-        Escolha um ou mais serviços para o seu atendimento.
-    </p>
+    <header>
+        <h1>Agendar Horário</h1>
+        <p class="subtitulo">Escolha um ou mais serviços para o seu atendimento.</p>
+    </header>
 
     <form id="agendamentoForm">
 
@@ -68,12 +34,12 @@
         <input type="email" id="email" placeholder="Seu melhor e-mail" required>
 
         <div id="lista_servicos" class="caixa-servicos">
-            <p>Carregando serviços disponíveis...</p>
+            <p style="color: var(--cor-subtexto); font-size: 0.9rem;">Carregando serviços disponíveis...</p>
         </div>
 
         <input type="datetime-local" id="data_hora" required>
 
-        <button type="submit" id="btnAgendar" class="btn-cadastrar" style="background-color: #28a745; border: none; padding: 12px; width: 100%; color: white; font-weight: bold; border-radius: 5px; cursor: pointer;">
+        <button type="submit" id="btnAgendar" class="btn-confirmar">
             Confirmar Agendamento
         </button>
 
@@ -97,12 +63,12 @@ async function carregarServicos() {
             containerServicos.innerHTML += `
                 <label>
                     <input type="checkbox" name="servicos_selecionados" value="${servico.id}">
-                    ${servico.nome} - R$ ${servico.preco.toFixed(2)}
+                    <span>${servico.nome} — <strong>R$ ${servico.preco.toFixed(2)}</strong></span>
                 </label>
             `;
         }
     } catch (erro) {
-        containerServicos.innerHTML = '<p style="color: red;">Erro ao carregar serviços.</p>';
+        containerServicos.innerHTML = '<p style="color: #ff6b6b; font-size: 0.9rem;">Erro ao carregar serviços.</p>';
     }
 }
 
@@ -110,6 +76,7 @@ async function carregarServicos() {
 async function sugerirAgrupamento(email, dataEscolhida) {
     try {
         const resposta = await fetch(`/api/historico?email=${email}`);
+        
         if (!resposta.ok) return dataEscolhida; // Se não tem histórico, devolve a data normal
         
         const agendamentos = await resposta.json();
@@ -123,17 +90,14 @@ async function sugerirAgrupamento(email, dataEscolhida) {
             if (dAgendamento > hoje && ag.status !== "Serviço Realizado") {
                 
                 // Calcula a diferença de dias entre a data que ela escolheu agora e a que ela já tinha marcado
-                const diffTempo = Math.abs(dEscolhida - dAgendamento);
-                const diffDias = diffTempo / (1000 * 60 * 60 * 24);
+                const diffTempo = Math.abs(dEscolhida - dAgendamento); 
+                const diffDias = diffTempo / (1000 * 60 * 60 * 24); 
                 
                 // Se for na mesma semana (diferença menor que 6 dias) mas em um horário/dia diferente
                 if (diffDias <= 6 && dEscolhida.getTime() !== dAgendamento.getTime()) {
-                    
-                    const dataFormatada = ag.data_hora.replace("T", " às ");
-                    
+                    const dataFormatada = ag.data_hora.replace("T", " às ");    
                     // Faz a pergunta para a cliente
-                    const querAgrupar = confirm(`✨ Dica da Leila:\n\nIdentificamos que você já tem um horário conosco para o dia ${dataFormatada}.\n\nGostaria de agendar este novo serviço para a mesma data e horário para aproveitar a viagem?`);
-                    
+                    const querAgrupar = confirm(`✨ Dica do Salão:\n\nIdentificamos que você já tem um horário conosco para o dia ${dataFormatada}.\n\nGostaria de agendar este novo serviço para a mesma data e horário para aproveitar a viagem?`);
                     if (querAgrupar) {
                         return ag.data_hora; // Se ela disser SIM, trocamos a data
                     }
@@ -149,10 +113,14 @@ async function sugerirAgrupamento(email, dataEscolhida) {
 
 // 3. ENVIAR FORMULÁRIO
 form.addEventListener("submit", async function(evento) {
-    evento.preventDefault();
+    evento.preventDefault(); // Impede que a página recarregue do zero
 
     const checkboxesMarcadas = document.querySelectorAll('input[name="servicos_selecionados"]:checked');
-    const servicosIds = Array.from(checkboxesMarcadas).map(cb => cb.value);
+    const servicosIds = []; 
+
+    for (let checkbox of checkboxesMarcadas) {
+        servicosIds.push(checkbox.value); 
+    }
 
     if (servicosIds.length === 0) {
         alert("Por favor, selecione pelo menos um serviço!");

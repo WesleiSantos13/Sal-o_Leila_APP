@@ -3,126 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Salão Leila - Bem-vindo</title>
+    <title>Salão Santana — Beauty & Concept</title>
     
-    <!-- Puxando o seu arquivo de estilo padrão -->
+    <!-- Google Fonts: Cormorant Garamond (Editorial de Luxo) + Plus Jakarta Sans (Moderna) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Puxando TODO o estilo visual do seu arquivo CSS externo -->
     <link rel="stylesheet" href="/static/style.css">
-    
-    <!-- Estilos específicos apenas para deixar esta página inicial mais bonita -->
-    <style>
-        .container-inicio {
-            max-width: 700px; /* Um pouco mais largo para caber os dois blocos lado a lado */
-            margin: 50px auto;
-            background: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.1);
-        }
-
-        .cabecalho-boas-vindas {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .cabecalho-boas-vindas h1 {
-            font-size: 2.8em;
-            color: #222;
-            margin-bottom: 10px;
-        }
-
-        .cabecalho-boas-vindas p {
-            color: #666;
-            font-size: 1.2em;
-        }
-
-        .opcoes-acesso {
-            display: flex;
-            gap: 20px;
-        }
-
-        /* Transformando os links em blocos grandes (Cards) */
-        .opcao-card {
-            flex: 1;
-            background: #f8f9fa;
-            border: 2px solid #e9ecef;
-            padding: 30px 20px;
-            border-radius: 10px;
-            text-align: center;
-            text-decoration: none; /* Tira o sublinhado do link */
-            color: #333;
-            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        /* Efeito de passar o mouse */
-        .opcao-card:hover {
-            transform: translateY(-5px); /* Faz o card pular para cima */
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-        }
-
-        .card-cliente:hover {
-            border-color: #28a745; /* Fica verde para o cliente */
-        }
-
-        .card-admin:hover {
-            border-color: #333; /* Fica escuro para o admin */
-        }
-
-        .opcao-icone {
-            font-size: 3.5em;
-            margin-bottom: 15px;
-        }
-
-        .opcao-card h2 {
-            margin: 0 0 10px 0;
-            font-size: 1.5em;
-        }
-
-        .opcao-card p {
-            font-size: 0.95em;
-            color: #555;
-            margin: 0;
-        }
-
-        .rodape {
-            margin-top: 50px;
-            text-align: center;
-            font-size: 0.9em;
-            color: #999;
-            border-top: 1px solid #eee;
-            padding-top: 20px;
-        }
-    </style>
 </head>
 <body>
 
-    <!-- Usando uma nova classe para não bagunçar o .container do style.css -->
-    <div class="container-inicio">
+    <div class="portal-container">
         
-        <div class="cabecalho-boas-vindas">
-            <h1>✨ Salão Leila ✨</h1>
-            <p>Realçando a sua beleza com os melhores profissionais da região.</p>
-        </div>
+        <header class="portal-header">
+            <div class="tag-status">Atendimento com Hora Marcada</div>
+            <h1>Salão <span>Santana</span></h1>
+            <p>Um novo conceito em beleza, autocuidado e sofisticação para realçar a sua melhor versão.</p>
+        </header>
 
-        <div class="opcoes-acesso">
+        <nav class="opcoes-grid">
             <!-- OPÇÃO 1: CLIENTE -->
-            <a href="/agendar" class="opcao-card card-agendar">
-                <div class="opcao-icone">💇‍♀️</div>
-                <h2>Sou Cliente</h2>
-                <p>Ver serviços disponíveis, preços e agendar meu horário.</p>
+            <a href="/agendar" class="card-acesso card-cliente">
+                <div>
+                    <span class="card-badge badge-cliente">Acesso Rápido</span>
+                    <div class="card-conteudo">
+                        <h2>Agendamento</h2>
+                        <p>Explore nosso menu de serviços, consulte valores e escolha o horário ideal com nossos especialistas.</p>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <span>Agendar horário</span>
+                    <span class="seta-link">→</span>
+                </div>
             </a>
 
             <!-- OPÇÃO 2: ADMINISTRAÇÃO -->
-            <a href="/admin" class="opcao-card card-admin">
-                <div class="opcao-icone">⚙️</div>
-                <h2>Administração</h2>
-                <p>Acesso restrito para gerenciamento do salão e clientes.</p>
+            <a href="/admin" class="card-acesso card-admin">
+                <div>
+                    <span class="card-badge badge-admin">Restrito</span>
+                    <div class="card-conteudo">
+                        <h2>Gestão & Admin</h2>
+                        <p>Painel de controle para gerenciar agendamentos, profissionais, horários e carteira de clientes.</p>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <span>Acessar painel</span>
+                    <span class="seta-link">→</span>
+                </div>
             </a>
-        </div>
+        </nav>
 
-        <div class="rodape">
-            <p>📍 Rua das Flores, 123 - Centro | 📞 (11) 99999-9999</p>
-            <p>&copy; 2026 Salão Leila. Todos os direitos reservados.</p>
-        </div>
+        <footer class="portal-footer">
+            <p>📍 Rua das Flores, 123 — Centro &nbsp;•&nbsp; 📞 <span>(11) 99999-9999</span></p>
+            <p>&copy; 2026 Salão Santana. Todos os direitos reservados.</p>
+        </footer>
 
     </div>
 

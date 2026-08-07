@@ -11,14 +11,12 @@ from app.routes.agendamento_routes import agendamento_bp
 
 def create_app():
 
-    app = Flask(
-    __name__,
-    template_folder="../templates",
-    static_folder="../static"
-)
+    app = Flask( __name__, template_folder="../templates", static_folder="../static")
 
+    # Importa as configurações vitais
     app.config.from_object(Config)
 
+    # Conexão com o bd
     db.init_app(app)
 
     app.register_blueprint(cliente_bp)
@@ -74,7 +72,6 @@ def create_app():
         if Servico.query.count() == 0:
 
             servicos = [
-
                 Servico(
                     nome="Corte de Cabelo",
                     preco=40,

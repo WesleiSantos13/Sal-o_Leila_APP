@@ -2,82 +2,102 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Gerenciar Clientes - Salão Leila</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Clientes | Salão Santana</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 
     <div class="container">
 
+        <header class="page-header">
+            <h1>Gerenciar Clientes</h1>
+            <p class="subtitle">Cadastre novos clientes ou consulte a base de dados do Salão Santana.</p>
+        </header>
 
-        <h1>Gerenciar Clientes</h1>
+        <!-- Formulário de Cadastro -->
+        <form id="clienteForm" class="form-grid">
+            <div class="form-group">
+                <input
+                    type="text"
+                    id="nome"
+                    placeholder="Nome completo"
+                    required
+                >
+            </div>
 
-        <form id="clienteForm">
-            <input
-                type="text"
-                id="nome"
-                placeholder="Nome"
-                required
-            >
+            <div class="form-group">
+                <input
+                    type="text"
+                    id="telefone"
+                    placeholder="Telefone / WhatsApp"
+                    required
+                >
+            </div>
 
-            <input
-                type="text"
-                id="telefone"
-                placeholder="Telefone"
-                required
-            >
+            <div class="form-group">
+                <input
+                    type="email"
+                    id="email"
+                    placeholder="E-mail"
+                    required
+                >
+            </div>
 
-            <input
-                type="email"
-                id="email"
-                placeholder="Email"
-                required
-            >
+            <div class="botoes-form">
+                <button type="submit" id="btnSalvar" class="btn-confirmar">
+                    Cadastrar Cliente
+                </button>
 
-        <div class="botoes-form">
-            <button type="submit" id="btnSalvar" class="btn-cadastrar">
-                Cadastrar
-            </button>
-
-            <a href="/admin/dashboard" class="btn-voltar">
-                ⬅ Voltar
-            </a> 
-        </div>
+                <a href="/admin/dashboard" class="btn-nav btn-nav-voltar" style="margin-top: 8px;">
+                    ⬅ Voltar ao Painel
+                </a> 
+            </div>
         </form>
 
-        <hr>
+        <hr class="divider">
 
-        <h2>Lista de Clientes</h2>
-
-        <ul id="listaClientes"></ul>
+        <section class="lista-section">
+            <h2>Lista de Clientes</h2>
+            <ul id="listaClientes" class="item-list"></ul>
+        </section>
 
     </div>
 
-   
     <script>
         const form = document.getElementById("clienteForm");
         const lista = document.getElementById("listaClientes");
 
-        // 1. LISTAR CLIENTES
+        // 1. LISTAR CLIENTES (Atualizado com layout de cards do Dark Mode)
         async function carregarClientes() {
-            const resposta = await fetch("/clientes");
-            const clientes = await resposta.json();
+            try {
+                const resposta = await fetch("/clientes");
+                const clientes = await resposta.json();
 
-            lista.innerHTML = "";
+                lista.innerHTML = "";
 
-            for (let cliente of clientes) {
-                lista.innerHTML += `
-                    <li>
-                        <strong>${cliente.nome}</strong> <br>
-                        📞 ${cliente.telefone} | ✉️ ${cliente.email}
-                        <br><br>
-                        
-                        <!-- Botão de Apagar usando a classe btn-apagar -->
-                        <button class="btn-apagar" onclick="deletarCliente(${cliente.id})">
-                            🗑 Apagar
-                        </button>
-                    </li>
-                `;
+                if (clientes.length === 0) {
+                    lista.innerHTML = "<p class='status-msg'>Nenhum cliente cadastrado ainda.</p>";
+                    return;
+                }
+
+                for (let cliente of clientes) {
+                    lista.innerHTML += `
+                        <li class="card-item">
+                            <div class="item-info">
+                                <strong>${cliente.nome}</strong> <br>
+                                📞 ${cliente.telefone} &nbsp;|&nbsp; ✉️ ${cliente.email}
+                            </div>
+                            <div class="item-actions">
+                                <button class="btn-editar-data" onclick="deletarCliente(${cliente.id})">
+                                    🗑 Apagar
+                                </button>
+                            </div>
+                        </li>
+                    `;
+                }
+            } catch (erro) {
+                lista.innerHTML = "<p class='mensagem-erro' style='display:block;'>Erro ao carregar a lista de clientes.</p>";
             }
         }
 
@@ -93,8 +113,7 @@
                     const dadosErro = await resposta.json();
                     alert("⚠️ " + dadosErro.erro); // Mostra o erro do Python na tela
                 } else {
-                    // Se deu tudo certo, atualiza a lista
-                    carregarClientes(); 
+                    carregarClientes(); // Atualiza a lista se der certo
                 }
             }
         }
@@ -107,20 +126,26 @@
             const telefone = document.getElementById("telefone").value;
             const email = document.getElementById("email").value;
 
-            await fetch("/clientes", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    nome: nome,
-                    telefone: telefone,
-                    email: email
-                })
-            });
+            try {
+                const resposta = await fetch("/clientes", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        nome: nome,
+                        telefone: telefone,
+                        email: email
+                    })
+                });
 
-            form.reset(); // Limpa os campos do formulário
-            carregarClientes(); // Atualiza a lista
+                const dados = await resposta.json();
+                alert(dados.mensagem);
+                form.reset(); // Limpa os campos do formulário
+                carregarClientes(); // Atualiza a lista
+            } catch (erro) {
+                alert("Erro ao tentar cadastrar cliente.");
+            }
         });
 
         // INICIALIZAÇÃO: Executa ao abrir a página

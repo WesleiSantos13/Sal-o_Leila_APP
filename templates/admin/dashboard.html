@@ -2,128 +2,54 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Painel - Salão Leila</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Administrativo | Salão Santana</title>
     <link rel="stylesheet" href="/static/style.css">
-    
-    <style>
-        .cabecalho-dashboard {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-
-        .cabecalho-dashboard h1 {
-            margin: 0;
-            font-size: 2em;
-        }
-
-        .cabecalho-dashboard p {
-            margin: 5px 0 0 0;
-            color: #666;
-            font-weight: bold;
-        }
-
-        .cabecalho-dashboard .btn-voltar {
-            width: auto;
-            padding: 10px 20px;
-            margin: 0;
-        }
-
-        /* Distribuindo os 4 cards em Grid */
-        .cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-top: 30px;
-        }
-
-        .card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            cursor: default;
-            background: #f8f9fa;
-            padding: 30px 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            border-radius: 8px;
-            border-bottom: 4px solid transparent; /* Para colocar uma cor embaixo */
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 15px rgba(0,0,0,0.15);
-        }
-
-        .card h2 {
-            margin-top: 0;
-            font-size: 1.1em;
-            color: #555;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .card p {
-            font-size: 2.5em;
-            font-weight: bold;
-            margin: 10px 0 0 0;
-        }
-        
-        /* Cores específicas para cada Card */
-        #cardClientes { border-color: #6c757d; }
-        #totalClientes { color: #6c757d; }
-
-        #cardAgendamentos { border-color: #ffc107; }
-        #totalAgendamentos { color: #ffc107; }
-
-        #cardConcluidos { border-color: #17a2b8; }
-        #totalConcluidos { color: #17a2b8; }
-
-        #cardFaturamento { border-color: #28a745; }
-        #faturamentoSemana { color: #28a745; font-size: 2em; }
-    </style>
 </head>
 <body>
 
     <div class="container" style="max-width: 1000px;"> 
 
-        <div class="cabecalho-dashboard">
+        <!-- Cabeçalho do Painel -->
+        <header class="cabecalho-dashboard">
             <div>
                 <h1>✨ Desempenho do Negócio</h1>
-                <p id="textoSemana">Carregando dados da semana...</p>
+                <p id="textoSemana" class="subtitle">Carregando dados da semana...</p>
             </div>
-            <a href="/admin" class="btn-voltar">⬅ Sair</a>
-        </div>
+            <a href="/admin" class="btn-nav btn-nav-voltar" style="width: auto; padding: 10px 20px;">
+                ⬅ Sair
+            </a>
+        </header>
 
-        <div class="menu">
-            <a href="/admin/clientes">👥 Clientes</a>
-            <a href="/admin/servicos">💇‍♀️ Serviços</a>
-            <a href="/admin/agendamentos">📅 Agendamentos</a>
-        </div>
+        <!-- Menu de Navegação Administrativa -->
+        <nav class="botoes-topo menu-admin">
+            <a href="/admin/clientes" class="btn-nav btn-nav-historico">👥 Clientes</a>
+            <a href="/admin/servicos" class="btn-nav btn-nav-historico">💇‍♀️ Serviços</a>
+            <a href="/admin/agendamentos" class="btn-nav btn-nav-historico">📅 Agendamentos</a>
+        </nav>
 
-        <div class="cards">
-            <div class="card" id="cardClientes">
+        <!-- Grid de Cards de Métricas -->
+        <section class="cards-grid">
+            <div class="card-metric card-clientes">
                 <h2>Total de Clientes</h2>
                 <p id="totalClientes">...</p> 
             </div>
 
-            <div class="card" id="cardAgendamentos">
+            <div class="card-metric card-agendamentos">
                 <h2>Agendados na Semana</h2>
                 <p id="totalAgendamentos">...</p>
             </div>
 
-            <div class="card" id="cardConcluidos">
+            <div class="card-metric card-concluidos">
                 <h2>Concluídos na Semana</h2>
                 <p id="totalConcluidos">...</p>
             </div>
 
-            <div class="card" id="cardFaturamento">
+            <div class="card-metric card-faturamento">
                 <h2>Faturamento Semanal</h2>
                 <p id="faturamentoSemana">...</p>
             </div>
-        </div>
+        </section>
 
     </div>
 
@@ -165,10 +91,6 @@ async function carregarDashboard() {
             fetch('/agendamentos')
         ]);
 
-        if (!respostaClientes.ok || !respostaServicos.ok || !respostaAgendamentos.ok) {
-            throw new Error("Falha na API");
-        }
-
         const clientesJson = await respostaClientes.json();
         const servicosJson = await respostaServicos.json();
         const agendamentosJson = await respostaAgendamentos.json();
@@ -193,13 +115,13 @@ async function carregarDashboard() {
                 // Se além de ser dessa semana, ele já estiver pago/concluído...
                 if (agendamento.status === 'Serviço Realizado') {
                     concluidosDaSemana++;
-                    dinheiroDaSemana += precosServicos[agendamento.servico_id] || 0; // Soma o preço do serviço
+                    dinheiroDaSemana += precosServicos[agendamento.servico_id]; // Soma o preço do serviço
                 }
             }
         }
 
         // Atualiza a tela
-        document.getElementById('totalClientes').innerText = clientesJson.length; // O total de clientes a Leila gosta de ver o número cheio
+        document.getElementById('totalClientes').innerText = clientesJson.length;
         document.getElementById('totalAgendamentos').innerText = agendamentosDaSemana;
         document.getElementById('totalConcluidos').innerText = concluidosDaSemana;
         

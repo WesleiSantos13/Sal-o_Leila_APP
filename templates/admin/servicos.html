@@ -2,98 +2,119 @@
 <html lang="pt-BR">
 
 <head>
-
     <meta charset="UTF-8">
-
-    <title>Serviços</title>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Serviços | Salão Santana</title>
     <link rel="stylesheet" href="/static/style.css">
-
 </head>
 
 <body>
 
 <div class="container">
 
-    <h1>Serviços</h1>
+    <header class="page-header">
+        <h1>Gerenciar Serviços</h1>
+        <p class="subtitle">Cadastre, edite ou remova os serviços oferecidos no Salão Santana.</p>
+    </header>
 
-    <form id="servicoForm">
+    <!-- Formulário de Cadastro / Edição -->
+    <form id="servicoForm" class="form-grid">
 
-        <input
-            type="text"
-            id="nome"
-            placeholder="Nome do Serviço"
-            required
-        >
+        <div class="form-group">
+            <input
+                type="text"
+                id="nome"
+                placeholder="Nome do Serviço (ex: Corte Masculino)"
+                required
+            >
+        </div>
 
-        <input
-            type="number"
-            id="preco"
-            placeholder="Preço"
-            required
-        >
+        <div class="form-group">
+            <input
+                type="number"
+                id="preco"
+                step="0.01"
+                placeholder="Preço (R$)"
+                required
+            >
+        </div>
 
-        <input
-            type="number"
-            id="duracao"
-            placeholder="Duração"
-            required
-        >
+        <div class="form-group">
+            <input
+                type="number"
+                id="duracao"
+                placeholder="Duração (em minutos)"
+                required
+            >
+        </div>
+
         <div class="botoes-form">
-            <button type="submit" id="btnSalvar" class="btn-cadastrar">
-                Cadastrar
+            <button type="submit" id="btnSalvar" class="btn-confirmar">
+                Cadastrar Serviço
             </button>
 
-            <a href="/admin/dashboard" class="btn-voltar">
-                ⬅ Voltar
+            <a href="/admin/dashboard" class="btn-nav btn-nav-voltar" style="margin-top: 8px;">
+                ⬅ Voltar ao Painel
             </a> 
         </div>
 
-
     </form>
 
+    <hr class="divider">
 
-    <ul id="listaServicos"></ul>
+    <section class="lista-section">
+        <h2>Lista de Serviços</h2>
+        <ul id="listaServicos" class="item-list"></ul>
+    </section>
 
 </div>
-
 
 <script>
 const form = document.getElementById("servicoForm");
 const lista = document.getElementById("listaServicos");
+const btnSalvar = document.getElementById("btnSalvar");
 let editandoId = null;
 
-// 1. LISTAR SERVIÇOS (Apenas busca e exibe)
+// 1. LISTAR SERVIÇOS
 async function carregarServicos() {
-    // Faz a requisição GET para buscar os dados
-    const resposta = await fetch("/servicos"); 
-    const servicos = await resposta.json();
+    try {
+        const resposta = await fetch("/servicos"); 
+        const servicos = await resposta.json();
 
-    lista.innerHTML = "";
+        lista.innerHTML = "";
 
-    for (let servico of servicos) {
-        //Botao Editar e apagar
-        lista.innerHTML += `
-            <li>
-                ${servico.nome} - R$ ${servico.preco} - ${servico.duracao} min
-                                
-                <button class="btn-editar" onclick="editarServico(${servico.id}, '${servico.nome}', ${servico.preco}, ${servico.duracao})">
-                    Editar
-                </button>
+        if (servicos.length === 0) {
+            lista.innerHTML = "<p class='status-msg'>Nenhum serviço cadastrado ainda.</p>";
+            return;
+        }
 
-                <button class="btn-apagar" onclick="deletarServico(${servico.id})">
-                    Excluir
-                </button>
-            </li>
-        `;
+        for (let servico of servicos) {
+            lista.innerHTML += `
+                <li class="card-item">
+                    <div class="item-info">
+                        <strong>${servico.nome}</strong> <br>
+                        💰 R$ ${parseFloat(servico.preco).toFixed(2)} &nbsp;|&nbsp; ⏱️ ${servico.duracao} min
+                    </div>
+                    <div class="item-actions">
+                        <button class="btn-editar-data" onclick="editarServico(${servico.id}, '${servico.nome}', ${servico.preco}, ${servico.duracao})">
+                            ✏️ Editar
+                        </button>
+                        <button class="btn-editar-data" onclick="deletarServico(${servico.id})">
+                            🗑 Excluir
+                        </button>
+                    </div>
+                </li>
+            `;
+        }
+    } catch (erro) {
+        lista.innerHTML = "<p class='mensagem-erro' style='display:block;'>Erro ao carregar a lista de serviços.</p>";
     }
 }
 
-// 2. SALVAR OU EDITAR SERVIÇO (Lida com o evento do formulário)
+// 2. SALVAR OU EDITAR SERVIÇO
 form.addEventListener("submit", async function(evento) {
     evento.preventDefault();
 
-    // Pegando os VALORES dos inputs 
     const nome = document.getElementById("nome").value;
     const preco = document.getElementById("preco").value;
     const duracao = document.getElementById("duracao").value;
@@ -106,7 +127,7 @@ form.addEventListener("submit", async function(evento) {
 
     if (editandoId) {
         // EDITAR (PUT)
-        await fetch(`/servicos/${editandoId}`, {
+        const resposta = await fetch(`/servicos/${editandoId}`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json"
@@ -114,7 +135,16 @@ form.addEventListener("submit", async function(evento) {
             body: JSON.stringify(dadosDoServico)
         });
         
+        const dados = await resposta.json();
+        
+        if (resposta.status == 400) {
+            alert("⚠️ " + dados.erro);
+        } else {
+            alert("✨ " + dados.mensagem);
+        }
+        
         editandoId = null; // Reseta a variável após editar
+        btnSalvar.innerText = "Cadastrar Serviço"; // Retorna o texto original do botão
         
     } else {
         // CRIAR (POST)
@@ -125,6 +155,7 @@ form.addEventListener("submit", async function(evento) {
             },
             body: JSON.stringify(dadosDoServico)
         });
+        alert("✨ Serviço cadastrado com sucesso!");
     }
 
     form.reset(); // Limpa os campos
@@ -133,11 +164,20 @@ form.addEventListener("submit", async function(evento) {
 
 // 3. DELETAR SERVIÇO
 async function deletarServico(id) {
-    await fetch(`/servicos/${id}`, {
-        method: "DELETE"
-    });
+    if (confirm("Tem certeza que deseja apagar este serviço?")) {
+        const resposta = await fetch(`/servicos/${id}`, {
+            method: "DELETE"
+        });
+        
+        const dados = await resposta.json();
 
-    carregarServicos(); // Atualiza a lista após deletar
+        if (resposta.status == 400) {
+            alert("⚠️ " + dados.erro);
+        } else {
+            carregarServicos(); // Atualiza a lista 
+            alert("🗑️ " + dados.mensagem); 
+        }
+    }
 }
 
 // 4. PREPARAR PARA EDITAR
@@ -148,6 +188,12 @@ function editarServico(id, nome, preco, duracao) {
     document.getElementById("nome").value = nome;
     document.getElementById("preco").value = preco;
     document.getElementById("duracao").value = duracao;
+
+    // Altera o texto do botão principal para indicar modo de edição
+    btnSalvar.innerText = "Salvar Alterações";
+
+    // Rola a página suavemente de volta ao topo para o usuário ver o formulário
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // INICIALIZAÇÃO: Executa ao abrir a página

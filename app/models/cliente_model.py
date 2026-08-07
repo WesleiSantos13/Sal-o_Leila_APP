@@ -9,4 +9,4 @@ class Cliente(db.Model):
     telefone = db.Column(db.String(20), nullable=False)
     email = db.Column(db.String(100), unique=True)
 
-    agendamentos = db.relationship('Agendamento', backref='cliente', lazy=True)
+    

@@ -2,66 +2,56 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Meu Histórico - Salão Leila</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Histórico | Salão Santana</title>
     <link rel="stylesheet" href="/static/style.css">
-    <style>
-        .caixa-busca {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .caixa-busca input {
-            flex: 1;
-            margin-bottom: 0; /* Alinha com o botão */
-        }
-        
-        .aviso-telefone {
-            color: #d9534f;
-            font-size: 0.9em;
-            font-weight: bold;
-        }
-
-        /* Esconde o formulário de edição de data até o cliente clicar em alterar */
-        #formEdicaoData {
-            display: none;
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
-            margin-top: 20px;
-            border: 1px solid #ccc;
-        }
-    </style>
 </head>
 <body>
 
 <div class="container">
     
-    <div class="botoes-form">
-        <a href="/" class="btn-voltar">⬅ Voltar ao Início</a>
-    </div>
-
-    <h1>Meus Agendamentos</h1>
-    <p style="text-align: center; margin-bottom: 20px;">Digite seu e-mail para ver seu histórico ou alterar uma data.</p>
+    <header class="page-header">
+        <h1>Meus Agendamentos</h1>
+        <p class="subtitle">Digite seu e-mail para consultar seu histórico ou reagendar um horário.</p>
+    </header>
 
     <!-- Formulário de Busca -->
     <form id="buscaForm" class="caixa-busca">
-        <input type="email" id="emailBusca" placeholder="exemplo@email.com" required>
-        <button type="submit" class="btn-cadastrar" style="width: auto;">Buscar</button>
+        <input 
+            type="email" 
+            id="emailBusca" 
+            placeholder="exemplo@email.com" 
+            required
+        >
+        <button type="submit" class="btn-confirmar btn-buscar">
+            Buscar
+        </button>
     </form>
 
-    <hr>
-
-    <ul id="listaHistorico"></ul>
-
-    <!-- Formulário escondido para escolher a nova data -->
-    <div id="formEdicaoData">
-        <h3>Alterar Data</h3>
-        <input type="datetime-local" id="novaData" class="select-padrao" required>
-        <div style="display: flex; gap: 10px;">
-            <button class="btn-cadastrar" onclick="salvarNovaData()">Confirmar Nova Data</button>
-            <button class="btn-voltar" onclick="fecharEdicao()">Cancelar</button>
+    <!-- Painel Oculto para Escolher Nova Data -->
+    <div id="formEdicaoData" class="painel-edicao" style="display: none;">
+        
+        <h3>Alterar Data do Agendamento</h3>
+        <div class="form-group">
+            <input type="datetime-local" id="novaData" required>
         </div>
+        <div class="botoes-edicao">
+            <button class="btn-confirmar" onclick="salvarNovaData()">Confirmar Nova Data</button>
+            <button class="btn-nav btn-nav-voltar" onclick="fecharEdicao()">Cancelar</button>
+        </div>
+    </div>
+
+    <hr class="divider">
+
+    <section class="lista-section">
+        <ul id="listaHistorico" class="item-list"></ul>
+    </section>
+
+    <!-- Botão de Voltar na parte inferior -->
+    <div class="botoes-form" style="margin-top: 32px;">
+        <a href="/" class="btn-nav btn-nav-voltar">
+            ⬅ Voltar ao Início
+        </a>
     </div>
 
 </div>
@@ -76,9 +66,15 @@ let mapaServicos = {};
 
 // 1. CARREGAR MAPA DE SERVIÇOS (Para mostrar os nomes)
 async function carregarServicos() {
-    const resposta = await fetch("/servicos");
-    const servicos = await resposta.json();
-    for (let s of servicos) mapaServicos[s.id] = s.nome;
+    try {
+        const resposta = await fetch("/servicos");
+        const servicos = await resposta.json();
+        for (let servico of servicos) {
+            mapaServicos[servico.id] = servico.nome;
+        }
+    } catch (erro) {
+        console.error("Erro ao carregar serviços:", erro);
+    }
 }
 
 // 2. BUSCAR HISTÓRICO DO CLIENTE
@@ -86,56 +82,63 @@ buscaForm.addEventListener("submit", async function(evento) {
     evento.preventDefault();
     const email = document.getElementById("emailBusca").value;
     
-    lista.innerHTML = "<p>Buscando...</p>";
+    lista.innerHTML = "<p class='status-msg'>Buscando agendamentos...</p>";
 
     try {
         const resposta = await fetch(`/api/historico?email=${email}`);
         
         if (!resposta.ok) {
-            lista.innerHTML = "<p style='color: red;'>Cliente não encontrado ou sem agendamentos.</p>";
+            lista.innerHTML = "<p class='mensagem-erro' style='display:block;'>Cliente não encontrado ou sem agendamentos ativos.</p>";
             return;
         }
 
         const agendamentos = await resposta.json();
         lista.innerHTML = "";
 
-        // Pegar a data e hora de HOJE para comparar
         const dataAtual = new Date();
 
         for (let agendamento of agendamentos) {
-            let nomeServico = mapaServicos[agendamento.servico_id] || "Serviço";
+            let nomeServico = mapaServicos[agendamento.servico_id] || "Serviço do Salão";
             let dataAgendamento = new Date(agendamento.data_hora);
             
-            // Calcula a diferença em horas entre o agendamento e o momento atual
+            // Diferença em horas entre o agendamento e o momento atual
             let diferencaHoras = (dataAgendamento - dataAtual) / (1000 * 60 * 60);
 
             let botoesHTML = "";
 
-            // REGRA: Se faltar MAIS de 48h, pode alterar pelo sistema
+            // Se faltar MAIS de 48h, permite alterar pelo sistema
             if (diferencaHoras > 48 && agendamento.status !== "Serviço Realizado") {
                 botoesHTML = `
-                    <button class="btn-editar" onclick="abrirEdicao(${agendamento.id})">
+                    <button class="btn-editar-data" onclick="abrirEdicao(${agendamento.id})">
                         📅 Alterar Data
                     </button>
                 `;
             } 
-            // REGRA: Se for no futuro, mas faltar MENOS de 48h, só por telefone
+            // Se faltar MENOS de 48h, orienta a ligar no salão
             else if (diferencaHoras > 0 && diferencaHoras <= 48 && agendamento.status !== "Serviço Realizado") {
-                botoesHTML = `<p class="aviso-telefone">Falta menos de 2 dias. Para alterar, ligue para nós!</p>`;
+                botoesHTML = `<p class="aviso-telefone">⚠️ Faltam menos de 48h. Para reagendar, entre em contato com nosso atendimento pelo telefone.</p>`;
             }
 
+            // Cores sofisticadas para o status no Dark Mode
+            let corStatus = '#a0a0a0'; // Agendado
+            if (agendamento.status === 'Confirmado') corStatus = '#d4af37'; // Dourado
+            if (agendamento.status === 'Serviço Realizado') corStatus = '#4caf50'; // Verde discreto
+
             lista.innerHTML += `
-                <li>
-                    <strong>Data/Hora:</strong> ${agendamento.data_hora.replace("T", " ")} <br>
-                    <strong>Serviço:</strong> ${nomeServico} <br>
-                    <strong>Status:</strong> ${agendamento.status}
-                    <br><br>
-                    ${botoesHTML}
+                <li class="card-item">
+                    <div class="item-info">
+                        <strong>Data/Hora:</strong> ${agendamento.data_hora.replace("T", " às ")} <br>
+                        <strong>Serviço:</strong> ${nomeServico} <br>
+                        <strong>Status:</strong> <span style="font-weight: 600; color: ${corStatus}">${agendamento.status}</span>
+                    </div>
+                    <div class="item-actions">
+                        ${botoesHTML}
+                    </div>
                 </li>
             `;
         }
     } catch (erro) {
-        lista.innerHTML = "<p>Erro ao buscar histórico.</p>";
+        lista.innerHTML = "<p class='mensagem-erro' style='display:block;'>Erro ao buscar histórico. Tente novamente.</p>";
     }
 });
 
@@ -143,6 +146,7 @@ buscaForm.addEventListener("submit", async function(evento) {
 function abrirEdicao(id) {
     agendamentoEditandoId = id;
     formEdicaoData.style.display = "block";
+    formEdicaoData.scrollIntoView({ behavior: "smooth" });
 }
 
 function fecharEdicao() {
@@ -154,7 +158,7 @@ async function salvarNovaData() {
     const novaData = document.getElementById("novaData").value;
     
     if(!novaData) {
-        alert("Escolha uma data válida!");
+        alert("Escolha uma data e horário válidos!");
         return;
     }
 
@@ -168,14 +172,14 @@ async function salvarNovaData() {
         alert("Data atualizada com sucesso!");
         fecharEdicao();
         
-        // Simula um clique no botão buscar para atualizar a lista automaticamente
+        // Simula clique no botão para atualizar a lista automaticamente
         document.querySelector("#buscaForm button").click(); 
     } catch (erro) {
-        alert("Erro ao alterar a data.");
+        alert("Erro ao tentar alterar a data.");
     }
 }
 
-// Inicializa carregando os serviços
+// Inicializa carregando o mapa de serviços
 carregarServicos();
 </script>
 

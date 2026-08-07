@@ -25,6 +25,7 @@ def criar_cliente():
     db.session.commit()
 
     return jsonify({
+        "mensagem": "Cliente criado com sucesso!",
         "id": novo_cliente.id,
         "nome": novo_cliente.nome
     }), 201
@@ -57,10 +58,11 @@ def deletar_cliente(id):
     
     if agendamentos_vinculados:
         return jsonify({
-            "erro": "Este cliente não pode ser apagado pois possui agendamentos/serviços no sistema."
+            "erro": "Este cliente não pode ser editado pois possui agendamentos/serviços no sistema."
         }), 400 
-
-    db.session.delete(cliente)
-    db.session.commit()
+    else:
+        db.session.delete(cliente)
+        db.session.commit()
+   
 
     return jsonify({"mensagem": "Cliente removido"}), 200

@@ -9,14 +9,11 @@ def criar_agendamento():
     dados = request.json
 
     # Converte a string que vem do HTML (ex: "2026-05-15T14:30") para objeto datetime do Python
-    data_hora = datetime.strptime(
-        dados['data_hora'],
-        "%Y-%m-%dT%H:%M"
-    )
+    data_hora = datetime.strptime(dados['data_hora'],"%Y-%m-%dT%H:%M")
 
     cliente_id = dados.get("cliente_id")
     
-    # Agora pegamos a lista de serviços (array) enviada
+    # Agora pegamos a lista de serviços 
     servicos_ids = dados.get("servicos_ids", [])
 
     # Validação: Se a lista estiver vazia, retorna um erro
