@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Admin | Salão Leila</title>
+    <title>Login Admin | Salão Santana</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -23,6 +23,7 @@
                 id="usuario"
                 placeholder="Usuário"
                 required
+                autocomplete="username"
             >
         </div>
 
@@ -32,11 +33,12 @@
                 id="senha"
                 placeholder="Senha"
                 required
+                autocomplete="current-password"
             >
         </div>
 
         <!-- Botão principal padronizado com .btn-confirmar (Dourado) -->
-        <button type="submit" class="btn-confirmar">
+        <button type="submit" id="btnEntrar" class="btn-confirmar">
             Entrar no Painel
         </button>
 
@@ -54,23 +56,53 @@
 
 <script>
 const form = document.getElementById("loginForm");
+const btnEntrar = document.getElementById("btnEntrar");
 const mensagemErro = document.getElementById("mensagemErro");
 
-form.addEventListener("submit", function(evento) {
+form.addEventListener("submit", async function(evento) {
     evento.preventDefault();
 
-    const usuario = document.getElementById("usuario").value;
+    const usuario = document.getElementById("usuario").value.trim();
     const senha = document.getElementById("senha").value;
 
-    // LÓGICA DE LOGIN
-    if (usuario === "admin" && senha === "123") {
-        window.location.href = "/admin/dashboard";
-    } else {
+    // 1. Feedback visual: desativa o botão enquanto consulta o servidor
+    const textoOriginal = btnEntrar.innerText;
+    btnEntrar.innerText = "Verificando...";
+    btnEntrar.disabled = true;
+    mensagemErro.style.display = "none";
+
+    try {
+        // 2. Envia os dados de forma segura para o servidor (Backend)
+        const resposta = await fetch("/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                usuario: usuario,
+                senha: senha
+            })
+        });
+
+        // 3. Verifica a resposta do servidor
+        if (resposta.ok) {
+            // Login autorizado pelo servidor! Redireciona para o painel
+            window.location.href = "/admin/dashboard";
+        } else {
+            // Erro de autenticação (401 Não Autorizado ou 400)
+            const dadosErro = await resposta.json().catch(() => null);
+            mensagemErro.innerText = (dadosErro && dadosErro.erro) ? dadosErro.erro : "Usuário ou senha inválidos!";
+            mensagemErro.style.display = "block";
+        }
+
+    } catch (erro) {
+        // Erro de conexão com o servidor
+        mensagemErro.innerText = "Erro de conexão com o servidor. Tente novamente.";
         mensagemErro.style.display = "block";
-        
-        setTimeout(() => {
-            mensagemErro.style.display = "none";
-        }, 3000);
+    } finally {
+        // 4. Reativa o botão em caso de erro para tentar de novo
+        btnEntrar.innerText = textoOriginal;
+        btnEntrar.disabled = false;
     }
 });
 </script>
